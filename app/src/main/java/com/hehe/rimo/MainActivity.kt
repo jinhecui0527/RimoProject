@@ -46,7 +46,7 @@ fun RimoDigitalCompanion() {
     val coroutineScope = rememberCoroutineScope()
     
     // 【重要】需要主人在这里填入你的 Gemini API Key！
-    val apiKey = "YOUR_API_KEY_HERE"
+    val apiKey = "AIzaSyAY3UtNrA2A0hHfkb6GArAFhXQ9xMu9a4o"
     
     val generativeModel = remember {
         GenerativeModel(
@@ -124,7 +124,7 @@ fun RimoDigitalCompanion() {
                         inputText = ""
                         messages = messages + "璃沫: (正在思考喵...)"
                         
-                        if (apiKey == "YOUR_API_KEY_HERE") {
+                        if (apiKey == "AIzaSyAY3UtNrA2A0hHfkb6GArAFhXQ9xMu9a4o") {
                             messages = messages.dropLast(1) + "璃沫: (呜呜，赫赫哥哥还没有给我配置 Gemini 的 API Key 喵... 快去配置吧！)"
                             return@Button
                         }
