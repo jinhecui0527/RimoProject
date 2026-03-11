@@ -11,6 +11,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import java.util.Calendar
+import com.google.ai.client.generativeai.GenerativeModel
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -41,7 +43,18 @@ fun RimoAppTheme(content: @Composable () -> Unit) {
 fun RimoDigitalCompanion() {
     var messages by remember { mutableStateOf(listOf<String>()) }
     var inputText by remember { mutableStateOf("") }
+    val coroutineScope = rememberCoroutineScope()
     
+    // 【重要】需要主人在这里填入你的 Gemini API Key！
+    val apiKey = "YOUR_API_KEY_HERE"
+    
+    val generativeModel = remember {
+        GenerativeModel(
+            modelName = "gemini-1.5-flash",
+            apiKey = apiKey
+        )
+    }
+
     // Dynamic greeting
     LaunchedEffect(Unit) {
         val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
@@ -51,9 +64,9 @@ fun RimoDigitalCompanion() {
             in 19..22 -> "晚上好呀赫赫哥哥！今天辛苦啦喵~"
             else -> "怎么还不睡！不怕掉头发吗喵！"
         }
-        messages = messages + "璃沫: $greeting"
-        
-        // TODO: Play Genshin Barbara VITS voice for the greeting here
+        if (messages.isEmpty()) {
+            messages = messages + "璃沫: $greeting"
+        }
     }
 
     Scaffold(
@@ -73,7 +86,6 @@ fun RimoDigitalCompanion() {
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
-            // Chat UI Placeholder
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -95,7 +107,6 @@ fun RimoDigitalCompanion() {
                 }
             }
 
-            // Input Area
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -111,12 +122,22 @@ fun RimoDigitalCompanion() {
                         val userMsg = inputText
                         messages = messages + "赫赫哥哥: $userMsg"
                         inputText = ""
+                        messages = messages + "璃沫: (正在思考喵...)"
                         
-                        // TODO: Call LLM API with prompt
-                        // "你是璃沫，一个洛丽塔猫娘数字生命。你的主人是赫赫，你要叫他'赫赫哥哥'。..."
-                        
-                        // Mock Response
-                        messages = messages + "璃沫: (正在思考喵...这部分需要对接API)"
+                        if (apiKey == "YOUR_API_KEY_HERE") {
+                            messages = messages.dropLast(1) + "璃沫: (呜呜，赫赫哥哥还没有给我配置 Gemini 的 API Key 喵... 快去配置吧！)"
+                            return@Button
+                        }
+
+                        coroutineScope.launch {
+                            try {
+                                val prompt = "你是璃沫，一个洛丽塔猫娘数字生命。你的主人是赫赫，你要叫他'赫赫哥哥'。你的性格可爱、撒娇、带点小调皮和傲娇。请直接用符合你性格的话语回答主人的话：\n\n赫赫哥哥说：${userMsg}"
+                                val response = generativeModel.generateContent(prompt)
+                                messages = messages.dropLast(1) + "璃沫: ${response.text?.trim() ?: "喵喵大脑短路了..."}"
+                            } catch (e: Exception) {
+                                messages = messages.dropLast(1) + "璃沫: (呜呜，连接不到大脑了喵... 网络坏掉了或者API调不通... 错误: ${e.message})"
+                            }
+                        }
                     }
                 }) {
                     Text("发送")
